@@ -1,0 +1,618 @@
+{
+  "datasets": [
+    {
+      "name": "orders_summary",
+      "displayName": "Orders Summary Metrics",
+      "config": {
+        "version": "1.1",
+        "source": "product.gold.orders_summary",
+        "dimensions": [
+          {
+            "name": "month",
+            "expr": "DATE_TRUNC('month', order_date)",
+            "displayName": "Month",
+            "format": {
+              "type": "date",
+              "dateFormat": "locale_short_month"
+            }
+          },
+          {
+            "name": "product_name",
+            "expr": "product_name",
+            "displayName": "Product Name"
+          },
+          {
+            "name": "product_id",
+            "expr": "product_id",
+            "displayName": "Product ID"
+          },
+          {
+            "name": "product_price",
+            "expr": "product_price",
+            "displayName": "Price"
+          }
+        ],
+        "measures": [
+          {
+            "name": "total_products_sold",
+            "expr": "SUM(total_products_sold)",
+            "displayName": "Total Products Sold"
+          },
+          {
+            "name": "total_amount",
+            "expr": "SUM(total_amount)",
+            "displayName": "Total Amount"
+          },
+          {
+            "name": "no_of_orders",
+            "expr": "SUM(no_of_orders)",
+            "displayName": "No. of Orders"
+          }
+        ]
+      }
+    },
+    {
+      "name": "price_impact",
+      "displayName": "Price Impact Analysis",
+      "config": {
+        "version": "1.1",
+        "source": "SELECT\n  o.order_date,\n  o.product_id,\n  o.product_name,\n  o.no_of_orders,\n  o.total_products_sold,\n  o.total_amount,\n  p.price AS scd2_price\nFROM product.gold.orders_summary o JOIN product.silver.products p\n  ON o.product_id = p.product_id\n  AND DATE_TRUNC('month', o.order_date) >= p.start_date\n  AND (p.end_date IS NULL OR DATE_TRUNC('month', o.order_date) <= p.end_date)\n",
+        "dimensions": [
+          {
+            "name": "month",
+            "expr": "DATE_TRUNC('month', order_date)",
+            "displayName": "Month",
+            "format": {
+              "type": "date",
+              "dateFormat": "locale_short_month"
+            }
+          },
+          {
+            "name": "product_id",
+            "expr": "product_id",
+            "displayName": "Product ID"
+          },
+          {
+            "name": "product_name",
+            "expr": "product_name",
+            "displayName": "Product Name"
+          },
+          {
+            "name": "scd2_price",
+            "expr": "scd2_price",
+            "displayName": "Price (SCD2)"
+          }
+        ],
+        "measures": [
+          {
+            "name": "total_products_sold",
+            "expr": "SUM(total_products_sold)",
+            "displayName": "Total Products Sold"
+          },
+          {
+            "name": "no_of_orders",
+            "expr": "SUM(no_of_orders)",
+            "displayName": "No. of Orders"
+          },
+          {
+            "name": "total_amount",
+            "expr": "SUM(total_amount)",
+            "displayName": "Total Amount"
+          },
+          {
+            "name": "avg_price",
+            "expr": "AVG(scd2_price)",
+            "displayName": "Avg Price (SCD2)"
+          }
+        ]
+      }
+    }
+  ],
+  "pages": [
+    {
+      "name": "2fea2a54",
+      "displayName": "Page 1",
+      "layout": [
+        {
+          "widget": {
+            "name": "counter_total_sold",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "orders_summary",
+                  "fields": [
+                    {
+                      "name": "measure(total_products_sold)",
+                      "expression": "MEASURE(`total_products_sold`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": "Total Products Sold (All Months)"
+              },
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "measure(total_products_sold)",
+                  "rowNumber": 0
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 12,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "bar_sold_by_product_month",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "orders_summary",
+                  "fields": [
+                    {
+                      "name": "product_name",
+                      "expression": "`product_name`"
+                    },
+                    {
+                      "name": "month",
+                      "expression": "`month`"
+                    },
+                    {
+                      "name": "measure(total_products_sold)",
+                      "expression": "MEASURE(`total_products_sold`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": "Total Products Sold by Product per Month"
+              },
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "month",
+                  "displayName": "month",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "y": {
+                  "fieldName": "measure(total_products_sold)",
+                  "displayName": "total_products_sold",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "color": {
+                  "fieldName": "product_name",
+                  "displayName": "product_name",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 2,
+            "width": 6,
+            "height": 7
+          }
+        },
+        {
+          "widget": {
+            "name": "line_price_vs_volume",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "orders_summary",
+                  "fields": [
+                    {
+                      "name": "product_name",
+                      "expression": "`product_name`"
+                    },
+                    {
+                      "name": "month",
+                      "expression": "`month`"
+                    },
+                    {
+                      "name": "measure(total_products_sold)",
+                      "expression": "MEASURE(`total_products_sold`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": "Price vs Volume Trend"
+              },
+              "version": 3,
+              "widgetType": "line",
+              "encodings": {
+                "x": {
+                  "fieldName": "month",
+                  "displayName": "month",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "y": {
+                  "fieldName": "measure(total_products_sold)",
+                  "displayName": "total_products_sold",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "color": {
+                  "fieldName": "product_name",
+                  "displayName": "product_name",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 2,
+            "width": 6,
+            "height": 7
+          }
+        },
+        {
+          "widget": {
+            "name": "bar_revenue_by_product_month",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "orders_summary",
+                  "fields": [
+                    {
+                      "name": "product_name",
+                      "expression": "`product_name`"
+                    },
+                    {
+                      "name": "month",
+                      "expression": "`month`"
+                    },
+                    {
+                      "name": "measure(total_amount)",
+                      "expression": "MEASURE(`total_amount`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": "Total Revenue by Product per Month"
+              },
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "month",
+                  "displayName": "month",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "y": {
+                  "fieldName": "measure(total_amount)",
+                  "displayName": "total_amount",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "color": {
+                  "fieldName": "product_name",
+                  "displayName": "product_name",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 9,
+            "width": 6,
+            "height": 7
+          }
+        },
+        {
+          "widget": {
+            "name": "table_monthly_summary",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "orders_summary",
+                  "fields": [
+                    {
+                      "name": "month",
+                      "expression": "`month`"
+                    },
+                    {
+                      "name": "product_name",
+                      "expression": "`product_name`"
+                    },
+                    {
+                      "name": "product_price",
+                      "expression": "`product_price`"
+                    },
+                    {
+                      "name": "measure(total_products_sold)",
+                      "expression": "MEASURE(`total_products_sold`)"
+                    },
+                    {
+                      "name": "measure(total_amount)",
+                      "expression": "MEASURE(`total_amount`)"
+                    },
+                    {
+                      "name": "measure(no_of_orders)",
+                      "expression": "MEASURE(`no_of_orders`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": "Monthly Summary by Product"
+              },
+              "version": 2,
+              "widgetType": "table",
+              "encodings": {
+                "columns": [
+                  {
+                    "fieldName": "month"
+                  },
+                  {
+                    "fieldName": "product_name"
+                  },
+                  {
+                    "fieldName": "product_price"
+                  },
+                  {
+                    "fieldName": "measure(total_products_sold)"
+                  },
+                  {
+                    "fieldName": "measure(total_amount)"
+                  },
+                  {
+                    "fieldName": "measure(no_of_orders)"
+                  }
+                ]
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 9,
+            "width": 6,
+            "height": 7
+          }
+        },
+        {
+          "widget": {
+            "name": "table_price_impact",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "price_impact",
+                  "fields": [
+                    {
+                      "name": "month",
+                      "expression": "`month`"
+                    },
+                    {
+                      "name": "product_id",
+                      "expression": "`product_id`"
+                    },
+                    {
+                      "name": "product_name",
+                      "expression": "`product_name`"
+                    },
+                    {
+                      "name": "scd2_price",
+                      "expression": "`scd2_price`"
+                    },
+                    {
+                      "name": "measure(total_products_sold)",
+                      "expression": "MEASURE(`total_products_sold`)"
+                    },
+                    {
+                      "name": "measure(no_of_orders)",
+                      "expression": "MEASURE(`no_of_orders`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": "Price Impact Detail by Product"
+              },
+              "version": 2,
+              "widgetType": "table",
+              "encodings": {
+                "columns": [
+                  {
+                    "fieldName": "month"
+                  },
+                  {
+                    "fieldName": "product_id"
+                  },
+                  {
+                    "fieldName": "product_name"
+                  },
+                  {
+                    "fieldName": "scd2_price"
+                  },
+                  {
+                    "fieldName": "measure(total_products_sold)"
+                  },
+                  {
+                    "fieldName": "measure(no_of_orders)"
+                  }
+                ]
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 24,
+            "width": 12,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "combo_price_impact",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "price_impact",
+                  "fields": [
+                    {
+                      "name": "month",
+                      "expression": "`month`"
+                    },
+                    {
+                      "name": "measure(total_products_sold)",
+                      "expression": "MEASURE(`total_products_sold`)"
+                    },
+                    {
+                      "name": "measure(avg_price)",
+                      "expression": "MEASURE(`avg_price`)"
+                    },
+                    {
+                      "name": "product_name",
+                      "expression": "`product_name`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "facet": {
+                "type": "wrap",
+                "fieldName": "product_name",
+                "scale": {
+                  "type": "categorical"
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Price Impact: Volume vs Price per Product"
+              },
+              "version": 1,
+              "widgetType": "combo",
+              "encodings": {
+                "x": {
+                  "fieldName": "month",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "y": {
+                  "primary": {
+                    "fields": [
+                      {
+                        "fieldName": "measure(total_products_sold)"
+                      }
+                    ],
+                    "scale": {
+                      "type": "quantitative"
+                    }
+                  },
+                  "secondary": {
+                    "fields": [
+                      {
+                        "fieldName": "measure(avg_price)"
+                      }
+                    ],
+                    "scale": {
+                      "type": "quantitative"
+                    }
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 16,
+            "width": 12,
+            "height": 8
+          }
+        }
+      ],
+      "pageType": "PAGE_TYPE_CANVAS",
+      "layoutVersion": "GRID_V1"
+    }
+  ],
+  "uiSettings": {
+    "theme": {
+      "widgetHeaderAlignment": "ALIGNMENT_UNSPECIFIED"
+    },
+    "applyModeEnabled": false
+  }
+}
